@@ -1,0 +1,19 @@
+#!ruby
+
+$LOAD_PATH << "#{File.dirname(__FILE__)}/lib"
+
+require 'server'
+
+class Settings
+  def nb_clients
+    100
+  end
+
+  def generate_client_storage
+    10
+  end
+end
+
+server = Server.new Settings.new
+
+server.run
