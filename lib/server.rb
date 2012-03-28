@@ -15,7 +15,7 @@ class Server
 
   def setup
     @settings.nb_clients.times do |i|
-      c = Client.new i, @settings
+      c = Client.new i, @settings, self
       @clients << c
       @client_infos << ClientInfo.new(c)
     end
@@ -33,7 +33,12 @@ class Server
 
   def put_file_part id, part
     client = @client_infos.select { |c| !c.is_full? && !c.has_file_part?(id, part) }.sample
-    client.add_file_part id, part
+    if client
+      client.add_file_part id, part
+      puts "Adding part #{part} of file #{id} to client #{client.id}"
+    else
+      puts "Network is full"
+    end
   end
 
   def add_file file
@@ -44,32 +49,4 @@ class Server
       put_file_part file.id, p
     end
   end
-
-  class AddFileEvent
-    def initialize parts, codes
-      @parts, @codes = parts, codes
-    end
-
-    def run server
-      file = WFile.new @parts, @codes
-      server.add_file file
-    end
-  end
-
-  class RemoveFileEvent
-  end
-
-  class GetFileEvent
-  end
-
-  class ClientDieEvent
-  end
-
-  class ClientDownEvent
-  end
-
-  class ClientUpEvent
-  end
-
-# TODO: Handle corruption
 end

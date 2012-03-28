@@ -2,6 +2,8 @@
 
 $LOAD_PATH << "#{File.dirname(__FILE__)}/lib"
 
+$DEBUG = true
+
 require 'server'
 
 class Settings
@@ -11,6 +13,14 @@ class Settings
 
   def generate_client_storage
     10
+  end
+
+  def generate_next_add_file_time
+    1
+  end
+
+  def generate_add_file_args
+    [[1], [1]]
   end
 end
 

@@ -1,18 +1,30 @@
+require 'events'
+
 class Client
   attr_reader :id, :settings, :thread, :files
   attr_accessor :remaining_size
 
   include TimerThread
 
-  def initialize id, settings
+  def initialize id, settings, server
     init_timer_thread
     @id = id
     @settings = settings
+    @server = server
     @remaining_size = @settings.generate_client_storage
     @files = {}
   end
 
   def setup
+    ClientEvent.events.each do |event|
+      next_iteration = Proc.new do
+        @server.queue << event.new(*@settings.send("generate_#{event::GENERATE}_args".to_sym))
+        add_timer @settings.send("generate_next_#{event::GENERATE}_time".to_sym), &next_iteration
+      end
+      add_timer @settings.send("generate_next_#{event::GENERATE}_time".to_sym), &next_iteration
+#      @server.add_timed_to_queue @settings.send("generate_next_#{event::GENERATE}_time".to_sym),
+#                                 event.new(*@settings.send("generate_#{event::GENERATE}_args".to_sym))
+    end
   end
 
   def run

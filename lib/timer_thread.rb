@@ -10,7 +10,7 @@ module TimerThread
   end
 
   def add_timed_to_queue time, event
-    add_timer t { process_event event }
+    self.add_timer(time) { process_event event }
   end
 
   def add_timer time, &block
@@ -27,7 +27,7 @@ module TimerThread
         ev.thread.join
         ev.run
       else
-        process_event event
+        process_event ev
       end
     end
   end
