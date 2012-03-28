@@ -9,11 +9,20 @@ module TimerThread
     @queue = Queue.new
   end
 
+  def add_timer_from_generator gen_name, &block
+    next_iteration = Proc.new do
+      block.call
+      add_timer timer_generator.send("generate_next_#{gen_name}_time".to_sym), &next_iteration
+    end
+    add_timer timer_generator.send("generate_next_#{gen_name}_time".to_sym), &next_iteration
+  end
+
   def add_timed_to_queue time, event
     self.add_timer(time) { process_event event }
   end
 
   def add_timer time, &block
+    return if time < 0 || time.to_f.infinite?
     t = Thread.new do
       sleep time
       queue << TimerEvent.new(t, block)

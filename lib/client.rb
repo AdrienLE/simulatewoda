@@ -15,15 +15,15 @@ class Client
     @files = {}
   end
 
+  def timer_generator
+    @settings
+  end
+
   def setup
     ClientEvent.events.each do |event|
-      next_iteration = Proc.new do
+      add_timer_from_generator(event::GENERATE) do
         @server.queue << event.new(*@settings.send("generate_#{event::GENERATE}_args".to_sym))
-        add_timer @settings.send("generate_next_#{event::GENERATE}_time".to_sym), &next_iteration
       end
-      add_timer @settings.send("generate_next_#{event::GENERATE}_time".to_sym), &next_iteration
-#      @server.add_timed_to_queue @settings.send("generate_next_#{event::GENERATE}_time".to_sym),
-#                                 event.new(*@settings.send("generate_#{event::GENERATE}_args".to_sym))
     end
   end
 

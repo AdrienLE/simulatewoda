@@ -13,13 +13,30 @@ class Server
     @client_infos = []
   end
 
+  def timer_generator
+    @settings
+  end
+
   def setup
-    @settings.nb_clients.times do |i|
+    start_nb = @settings.start_nb_clients
+    puts "Spawning an initial number of #{start_nb} client#{start_nb > 1 ? 's' : ''}"
+    start_nb.times do |i|
       c = Client.new i, @settings, self
       @clients << c
       @client_infos << ClientInfo.new(c)
     end
     @clients.each { |c| c.run }
+
+    add_timer_from_generator(:spawn_clients) do
+      to_spawn = @settings.generate_nb_clients_to_spawn
+      puts "Spawning #{to_spawn} new client#{start_nb > 1 ? 's' : ''}"
+      to_spawn.times do
+        c = Client.new @clients.size, @settings, self
+        @clients << c
+        @client_infos << ClientInfo.new(c)
+        c.run
+      end
+    end
   end
 
   def run

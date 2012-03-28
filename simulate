@@ -2,12 +2,13 @@
 
 $LOAD_PATH << "#{File.dirname(__FILE__)}/lib"
 
+# This is for a crash in any thread to crash the whole program
 $DEBUG = true
 
 require 'server'
 
 class Settings
-  def nb_clients
+  def start_nb_clients
     100
   end
 
@@ -15,12 +16,20 @@ class Settings
     10
   end
 
+  def generate_next_spawn_clients_time
+    1
+  end
+
+  def generate_nb_clients_to_spawn
+    2
+  end
+
   def generate_next_add_file_time
     1
   end
 
   def generate_add_file_args
-    [[1], [1]]
+    [[1], [2]]
   end
 end
 
