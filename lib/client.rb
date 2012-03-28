@@ -1,10 +1,19 @@
 require 'events'
 
+module ClientData
+  def add_file_part id, part
+    @files[id] ||= Set.new
+    @files[id] << part
+    @remaining_size -= 1
+  end
+end
+
 class Client
   attr_reader :id, :settings, :thread, :files
   attr_accessor :remaining_size
 
   include TimerThread
+  include ClientData
 
   def initialize id, settings, server
     init_timer_thread
@@ -38,21 +47,21 @@ class Client
     event.run self
   end
 
-  class AddFilePartEvent
-    def initialize id, part
-      @id, @part = id, part
+  class RunClientEvent
+    def initialize name, args
+      @name, @args = name, args
     end
 
     def run client
-      client.files[@id] ||= Set.new
-      client.files[@id] << @part
-      client.remaining_size -= 1
+      client.send @name, *@args
     end
   end
 end
 
 class ClientInfo
   attr_reader :client
+
+  include ClientData
 
   def initialize client
     @client = client
@@ -76,10 +85,8 @@ class ClientInfo
     @remaining_size == 0
   end
 
-  def add_file_part id, part
-    @files[id] ||= Set.new
-    @files[id] << part
-    @remaining_size -= 1
-    client.queue << Client::AddFilePartEvent.new(id, part)
+  def send_client_event name, args
+    self.send(name, *args)
+    client.queue << Client::RunClientEvent.new(name, args)
   end
 end

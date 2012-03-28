@@ -1,3 +1,4 @@
+require 'log'
 require 'timer_thread'
 require 'client'
 
@@ -17,9 +18,10 @@ class Server
     @settings
   end
 
+  LOG.show_spawn_clients
   def setup
     start_nb = @settings.start_nb_clients
-    puts "Spawning an initial number of #{start_nb} client#{start_nb > 1 ? 's' : ''}"
+    LOG.log_spawn_clients {"Spawning an initial number of #{start_nb} client#{start_nb > 1 ? 's' : ''}"}
     start_nb.times do |i|
       c = Client.new i, @settings, self
       @clients << c
@@ -29,7 +31,7 @@ class Server
 
     add_timer_from_generator(:spawn_clients) do
       to_spawn = @settings.generate_nb_clients_to_spawn
-      puts "Spawning #{to_spawn} new client#{start_nb > 1 ? 's' : ''}"
+      LOG.log_spawn_clients {"Spawning #{to_spawn} new client#{start_nb > 1 ? 's' : ''}"}
       to_spawn.times do
         c = Client.new @clients.size, @settings, self
         @clients << c
@@ -48,13 +50,14 @@ class Server
     event.run self
   end
 
+  LOG.hide_add_file_part
   def put_file_part id, part
     client = @client_infos.select { |c| !c.is_full? && !c.has_file_part?(id, part) }.sample
     if client
-      client.add_file_part id, part
-      puts "Adding part #{part} of file #{id} to client #{client.id}"
+      client.send_client_event :add_file_part, [id, part]
+      LOG.log_add_file_part {"Adding part #{part} of file #{id} to client #{client.id}"}
     else
-      puts "Network is full"
+      LOG.log_add_file_part {"Network is full"}
     end
   end
 
