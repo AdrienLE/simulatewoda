@@ -1,6 +1,7 @@
 require 'logger'
 require 'colorize'
 
+# colorize doesn't implement this one for some reason...
 String.class_eval do
   def bold
     if self =~ /^\e\[\d+;(\d+);(\d+)m(.*)\e\[0m$/

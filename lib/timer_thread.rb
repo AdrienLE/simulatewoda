@@ -1,5 +1,48 @@
 require 'thread'
-#require 'my_queue'
+
+class TimerManager
+  def initialize
+    @timers = []
+    @condvar = ConditionVariable.new
+    @mutex = Mutex.new
+    @thread = Thread.new do
+      @mutex.synchronize do
+        while true
+          old = Time.now
+          @condvar.wait(@mutex, min_time)
+          new = Time.now
+          @timers.each { |t| t.time -= new - old }
+          @timers.reject! do |t|
+            unless t.time > 0.0
+              t.block.call
+            end
+            t.time < 0.0
+          end
+        end
+      end
+    end
+  end
+
+  def min_time
+    return 1.0/0.0 if @timers.empty?
+    @timers.min_by { |t| t.time }.time
+  end
+
+  def add_timer t, &block
+    @mutex.synchronize do
+      @timers << TimerInfo.new(t, block)
+    end
+    @condvar.signal
+  end
+
+  class TimerInfo
+    attr_accessor :time, :block
+
+    def initialize time, block
+      @time, @block = time, block
+    end
+  end
+end
 
 # Improvement: having a constant number of threads instead of one per timer
 module TimerThread
@@ -23,9 +66,9 @@ module TimerThread
 
   def add_timer time, &block
     return if time < 0 || time.to_f.infinite?
-    t = Thread.new do
-      sleep time
-      queue << TimerEvent.new(t, block)
+    @@timerthread ||= TimerManager.new
+    @@timerthread.add_timer time do
+      queue << TimerEvent.new(block)
     end
   end
 
@@ -33,7 +76,6 @@ module TimerThread
     while true
       ev = queue.pop
       if ev.class == TimerEvent
-        ev.thread.join
         ev.run
       else
         process_event ev
@@ -42,13 +84,8 @@ module TimerThread
   end
 
   class TimerEvent
-    def initialize t, b
+    def initialize b
       @b = b
-      @t = t
-    end
-
-    def thread
-      @t
     end
 
     def run
