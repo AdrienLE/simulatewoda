@@ -24,7 +24,7 @@ class TimerManager
   end
 
   def min_time
-    return 1.0/0.0 if @timers.empty?
+    return 1000 if @timers.empty?
     @timers.min_by { |t| t.time }.time
   end
 

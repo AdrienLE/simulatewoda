@@ -5,7 +5,9 @@ $LOAD_PATH << "#{File.dirname(__FILE__)}/lib"
 # This is for a crash in any thread to crash the whole program
 $DEBUG = true
 
+require 'optparse'
 require 'server'
+require 'hash_ext'
 
 class Settings
   def start_nb_clients
@@ -32,6 +34,22 @@ class Settings
     [[1], [2]]
   end
 end
+
+opts = OptionParser.new do |opts|
+  LOG.types.each do |k,v|
+    opts.on("--[no-]log-#{k.to_s.gsub('_', '-')}", "Log the #{k} type") do |b|
+      LOG.types[k] = b
+    end
+  end
+  opts.on("-l x,y,z", Array, "Show log types") do |list|
+    list.each { |a| LOG.types[a.to_s.gsub("-", "_").to_sym] = true }
+  end
+  opts.on("-h x,y,z", Array, "Hide log types") do |list|
+    list.each { |a| LOG.types[a.to_s.gsub("-", "_").to_sym] = false }    
+  end
+end
+
+opts.parse(ARGV)
 
 server = Server.new Settings.new
 

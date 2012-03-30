@@ -50,7 +50,7 @@ class Server
     event.run self
   end
 
-  LOG.show_add_file_part
+  LOG.hide_add_file_part
   def put_file_part id, part
     client = @client_infos.select { |c| !c.is_full? && !c.has_file_part?(id, part) }.sample
     if client
